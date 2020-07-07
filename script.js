@@ -1,87 +1,56 @@
 class Store {
-  static getData() {
-    return JSON.parse(localStorage.getItem("todos"));
-  }
+	static getItems() {
+		return JSON.parse(localStorage.getItem("todos")) || []
+	}
 
-  static addItem(todo) {
-    let todos = JSON.parse(localStorage.getItem("todos"));
-    todos.push(todo);
-    localStorage.setItem("todos", JSON.stringify(todos));
-  }
+	static addItem(title) {
+		let todo = {id: Date.now(), title, checked: false};
+		let todos = this.getItems();
+		todos.push(todo)
+		localStorage.setItem("todos", JSON.stringify(todos));
+	}
 
-  static removeItem(id) {
-    let todos = JSON.parse(localStorage.getItem("todos"));
+	static removeItem(id) {
+		let todos = this.getItems();
+		todos = todos.filter(i => i.id !== id);
+		localStorage.setItem("todos", JSON.stringify(todos));
+	}
 
-    todos = todos.filter((t) => t.id !== id);
-    localStorage.setItem("todos", JSON.stringify(todos));
-  }
+	static checkItem(id) {
+		let todos = this.getItems();
+		todos.forEach(todo => {
+			if (todo.id === id) {
+				todo.checked = !todo.checked
+			}
+		});
+		localStorage.setItem("todos", JSON.stringify(todos));
+	}
 
-  static toggleChecked(id) {
-    let todos = JSON.parse(localStorage.getItem("todos"));
-    todos.forEach((todo) => {
-      if (todo.id == id) {
-        todo.checked = !todo.checked;
-      }
-    });
-    localStorage.setItem("todos", JSON.stringify(todos));
-  }
-}
-
-let init = () => {
-  if (!localStorage.getItem("todos")) {
-    localStorage.setItem("todos", JSON.stringify([]));
-  }
-  Store.getData().forEach((todo) => {
-    let t = document.createElement("li");
-    t.classList.add("w3-bar");
-    t.innerHTML = `
-<div class="w3-bar-item">
-  <input type="checkbox" onclick="Store.toggleChecked(${todo.id})" id="${
-      todo.id
-    }" ${todo.checked && "checked"} />
-  <label for="${todo.id}">${todo.title}</label>
-</div>
-<button class="w3-button w3-red w3-hover-pale-red w3-right w3-bar-item" onclick="deleteTodo(${
-      todo.id
-    })">
-  X
-</button>
-    `;
-    document.querySelector(".w3-ul").appendChild(t);
-  });
+	static syncItemsToUI() {
+		let todos = this.getItems();
+		let ul = document.querySelector(".w3-ul")
+		ul.innerHTML = ''
+		if (todos.length === 0) ul.innerHTML = `<li><span class="w3-center">You have no items</span></li>`
+		todos.forEach(todo => {
+			let li = document.createElement("li")
+			li.classList.add("w3-bar")
+			li.innerHTML = `<div class="w3-bar-item"><input onclick="Store.checkItem(${todo.id})" type="checkbox" id="${todo.id}" ${todo.checked && "checked"}> <label for="${todo.id}" class="text">${todo.title}</label></div> <button class="w3-button w3-red w3-hover-pale-red w3-right w3-bar-item" onclick="deleteItem(${todo.id})">X</button>`
+			ul.appendChild(li)
+		})
+	}
 };
 
-let addTodo = (title) => {
-  todo = { id: Math.floor(Date.now()), title, checked: false };
-  Store.addItem(todo);
-  let t = document.createElement("li");
-  t.classList.add("w3-bar");
-  t.innerHTML = `
-<div class="w3-bar-item">
-  <input type="checkbox" onclick="Store.toggleChecked(${todo.id})" id="${
-    todo.id
-  }" ${todo.checked && "checked"} />
-  <label for="${todo.id}">${todo.title}</label>
-</div>
-<button class="w3-button w3-red w3-hover-pale-red w3-right w3-bar-item" onclick="deleteTodo(${
-    todo.id
-  })">
-  X
-</button>
-    `;
-  document.querySelector(".w3-ul").appendChild(t);
-};
-
-let deleteTodo = (id) => {
-  Store.removeItem(id);
-  document.getElementById(id).parentElement.parentElement.outerHTML = "";
-};
-
-document.querySelector("form#form").addEventListener("submit", function (e) {
-  e.preventDefault();
-  let input = document.querySelector("#item");
-  addTodo(input.value);
-  input.value = "";
+document.getElementById("form").addEventListener("submit", function (e) {
+	e.preventDefault();
+	let input = document.getElementById("addinput");
+	Store.addItem(input.value);
+	input.value = ""
+	Store.syncItemsToUI();
 });
 
-init();
+function deleteItem(id) {
+	Store.removeItem(id);
+	Store.syncItemsToUI();
+}
+
+Store.syncItemsToUI();

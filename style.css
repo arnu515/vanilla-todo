@@ -1,0 +1,11 @@
+form#form {
+	display: grid;
+	grid-template-columns: auto 5rem;
+	width: 90%;
+	gap: 1rem;
+	margin: 1rem auto;
+}
+
+ul.w3-ul li div input:checked + label.text {
+	text-decoration: 3px green line-through;
+}
